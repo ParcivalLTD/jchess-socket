@@ -1,51 +1,70 @@
 const express = require("express");
 const http = require("http");
-const socketIo = require("socket.io");
-const Chess = require("chess");
+const socketIO = require("socket.io");
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server, { cors: { origin: "*" } });
+const io = socketIO(server);
 
-app.use(express.static("public")); // Assuming your client-side code is in a folder named "public"
+const PORT = process.env.PORT || 3000;
+
+app.use(express.static("public")); // Assuming your client-side files are in a "public" directory
 
 const games = {};
-let waitingPlayer = null;
 
 io.on("connection", (socket) => {
+  // Handle player joining the queue
   socket.on("joinQueue", () => {
-    if (waitingPlayer) {
-      const gameKey = `${waitingPlayer.id}-${socket.id}`;
-      games[gameKey] = new Chess();
-      io.to(waitingPlayer.id).emit("startGame", gameKey, "white");
-      io.to(socket.id).emit("startGame", gameKey, "black");
-      waitingPlayer = null;
+    let gameId;
+
+    // Check if there's a game waiting for an opponent
+    const waitingGame = Object.values(games).find((game) => !game.player2);
+
+    if (waitingGame) {
+      gameId = waitingGame.id;
+      waitingGame.player2 = socket.id;
+      io.to(socket.id).emit("gameFound", { gameId, color: "black" });
+      io.to(waitingGame.player1).emit("gameFound", { gameId, color: "white" });
     } else {
-      waitingPlayer = { id: socket.id };
+      // Create a new game
+      gameId = Date.now().toString();
+      games[gameId] = { id: gameId, player1: socket.id, player2: null };
+      io.to(socket.id).emit("waitingForOpponent", gameId);
+    }
+
+    // Join the room for the game
+    socket.join(gameId);
+  });
+
+  // Handle player moves
+  socket.on("playerMove", (move) => {
+    const game = Object.values(games).find(
+      (g) => g.player1 === socket.id || g.player2 === socket.id
+    );
+
+    if (game) {
+      const opponentSocketId =
+        game.player1 === socket.id ? game.player2 : game.player1;
+      io.to(opponentSocketId).emit("opponentMove", move);
     }
   });
 
-  socket.on("playerMove", (gameKey, move) => {
-    if (games[gameKey]) {
-      // Validate the move here if needed
-      // Update the game state
-      games[gameKey].move(move);
-      // Broadcast the move to the opponent
-      const opponentId = Object.keys(socket.rooms).find(
-        (id) => id !== socket.id
-      );
-      io.to(opponentId).emit("opponentMove", move);
-    }
-  });
-
+  // Handle disconnect
   socket.on("disconnect", () => {
-    if (waitingPlayer && waitingPlayer.id === socket.id) {
-      waitingPlayer = null;
+    // Find the game the player is in and inform the opponent
+    const game = Object.values(games).find(
+      (g) => g.player1 === socket.id || g.player2 === socket.id
+    );
+
+    if (game) {
+      const opponentSocketId =
+        game.player1 === socket.id ? game.player2 : game.player1;
+      io.to(opponentSocketId).emit("opponentLeft");
+      delete games[game.id];
     }
   });
 });
 
-const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });
