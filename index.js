@@ -7,7 +7,7 @@ const io = socketIO(server, { cors: { origin: "*" } });
 const PORT = process.env.PORT || 3000;
 
 let waitingPlayers = [];
-let playerRooms = {}; // New object to store room IDs
+let playerRooms = {};
 
 function userJoinRoom(io, socket) {
   waitingPlayers.push(socket);
@@ -17,8 +17,8 @@ function userJoinRoom(io, socket) {
   const randRoomId = Math.ceil(Math.random() * 10000);
   player1.join(randRoomId);
   player2.join(randRoomId);
-  playerRooms[player1.id] = randRoomId; // Save room ID for player 1
-  playerRooms[player2.id] = randRoomId; // Save room ID for player 2
+  playerRooms[player1.id] = randRoomId;
+  playerRooms[player2.id] = randRoomId;
   io.to(randRoomId).emit("startGame", {
     room: randRoomId,
     player1: player1.id,
@@ -31,19 +31,24 @@ function cancelPlayerSearch(socket) {
   waitingPlayers = waitingPlayers.filter((player) => player !== socket);
 }
 
+socket.on("provideUsername", (username) => {
+  playerRooms[username] = randRoomId;
+});
+
 io.on("connection", async (socket) => {
   console.log("A user connected");
+  socket.emit("requestUsername");
   userJoinRoom(io, socket);
 
   socket.on("playerMove", ({ move }) => {
-    const room = playerRooms[socket.id]; // Get room ID for player
+    const room = playerRooms[socket.id];
     socket.to(room).emit("opponentMove", move);
     console.log(move, room);
   });
 
   socket.on("disconnect", () => {
     console.log("A user disconnected");
-    delete playerRooms[socket.id]; // Remove room ID when player disconnects
+    delete playerRooms[socket.id];
     waitingPlayers = waitingPlayers.filter((player) => player !== socket);
   });
 });
