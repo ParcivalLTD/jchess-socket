@@ -31,10 +31,6 @@ function cancelPlayerSearch(socket) {
   waitingPlayers = waitingPlayers.filter((player) => player !== socket);
 }
 
-socket.on("provideUsername", (username) => {
-  playerRooms[username] = randRoomId;
-});
-
 io.on("connection", async (socket) => {
   console.log("A user connected");
   socket.emit("requestUsername");
@@ -50,6 +46,10 @@ io.on("connection", async (socket) => {
     console.log("A user disconnected");
     delete playerRooms[socket.id];
     waitingPlayers = waitingPlayers.filter((player) => player !== socket);
+  });
+
+  socket.on("provideUsername", (username) => {
+    playerRooms[username] = randRoomId;
   });
 });
 
