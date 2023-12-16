@@ -27,6 +27,10 @@ function userJoinRoom(io, socket) {
   console.log(`Game started in room ${randRoomId}`);
 }
 
+function cancelPlayerSearch(socket) {
+  waitingPlayers = waitingPlayers.filter((player) => player !== socket);
+}
+
 io.on("connection", async (socket) => {
   console.log("A user connected");
   userJoinRoom(io, socket);
