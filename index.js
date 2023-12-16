@@ -35,10 +35,11 @@ io.on("connection", async (socket) => {
   console.log("A user connected");
   userJoinRoom(io, socket);
 
-  socket.on("playerMove", ({ move }) => {
+  socket.on("playerMove", ({ fen }) => {
     const room = playerRooms[socket.id];
-    socket.to(room).emit("opponentMove", move);
-    console.log(move, room);
+    // Senden Sie die FEN an den Gegner
+    socket.to(room).emit("opponentMove", fen);
+    console.log(fen.fen, room);
   });
 
   socket.on("disconnect", () => {
