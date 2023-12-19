@@ -23,26 +23,10 @@ function userJoinRoom(io, socket) {
     room: randRoomId,
     player1: player1.id,
     player2: player2.id,
+    player1Username: player1.username,
+    player2Username: player2.username,
   });
   console.log(`Game started in room ${randRoomId}`);
-
-  // Listen for playerUsername event from player1
-  player1.on('playerUsername', function(username) {
-    // Store the username in the socket object
-    player1.username = username;
-    console.log(player1.username);
-    // Send the username to player2
-    player2.emit('enemyPlayerUsername', username);
-  });
-
-  // Listen for playerUsername event from player2
-  player2.on('playerUsername', function(username) {
-    // Store the username in the socket object
-    player2.username = username;
-    console.log(player2.username);
-    // Send the username to player1
-    player1.emit('enemyPlayerUsername', username);
-  });
 }
 
 function cancelPlayerSearch(socket) {
@@ -51,7 +35,10 @@ function cancelPlayerSearch(socket) {
 
 io.on("connection", async (socket) => {
   console.log("A user connected");
-  userJoinRoom(io, socket);
+  socket.on("login", (username) => {
+    socket.username = username;
+    userJoinRoom(io, socket);
+  });
 
   socket.on("playerMove", ({ move, fen }) => {
     const room = playerRooms[socket.id];
