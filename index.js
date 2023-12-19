@@ -30,6 +30,7 @@ function userJoinRoom(io, socket) {
   player1.on('playerUsername', function(username) {
     // Store the username in the socket object
     player1.username = username;
+    console.log(player1.username);
     // Send the username to player2
     player2.emit('enemyPlayerUsername', username);
   });
@@ -38,6 +39,7 @@ function userJoinRoom(io, socket) {
   player2.on('playerUsername', function(username) {
     // Store the username in the socket object
     player2.username = username;
+    console.log(player2.username);
     // Send the username to player1
     player1.emit('enemyPlayerUsername', username);
   });
