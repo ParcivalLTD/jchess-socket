@@ -40,6 +40,11 @@ io.on("connection", async (socket) => {
     userJoinRoom(io, socket);
   });
 
+  socket.on("chatMessage", (message) => {
+    const room = playerRooms[socket.id];
+    io.to(room).emit("chatMessage", { username: socket.username, message });
+  });
+
   socket.on("playerMove", ({ move, fen }) => {
     const room = playerRooms[socket.id];
     socket.to(room).emit("opponentMove", { move, fen });
