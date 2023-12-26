@@ -9,7 +9,18 @@ const PORT = process.env.PORT || 3000;
 let waitingPlayers = [];
 let playerRooms = {};
 
+let usernames = new Set();
+let ips = new Set();
+
 function userJoinRoom(io, socket) {
+  if (usernames.has(socket.username) || ips.has(socket.handshake.address)) {
+    socket.emit("error", "Benutzername oder IP-Adresse bereits in Verwendung");
+    return;
+  }
+
+  usernames.add(socket.username);
+  ips.add(socket.handshake.address);
+
   waitingPlayers.push(socket);
   if (waitingPlayers.length < 2) return;
   const player1 = waitingPlayers.shift();
@@ -52,6 +63,8 @@ io.on("connection", async (socket) => {
   });
 
   socket.on("disconnect", () => {
+    usernames.delete(socket.username);
+    ips.delete(socket.handshake.address);
     console.log("A user disconnected");
     const room = playerRooms[socket.id];
     if (room) {
