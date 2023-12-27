@@ -15,7 +15,7 @@ let ips = new Set();
 function userJoinRoom(io, socket) {
   if (usernames.has(socket.username) || ips.has(socket.handshake.address)) {
     socket.emit("error", "Benutzername oder IP-Adresse bereits in Verwendung");
-    return;
+    //return;
   }
 
   usernames.add(socket.username);
