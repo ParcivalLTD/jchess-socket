@@ -41,8 +41,8 @@ function userJoinRoom(io, socket) {
     room: randRoomId,
     player1: player1.id,
     player2: player2.id,
-    player1Username: player1.username.username,
-    player2Username: player2.username.username,
+    player1Username: player1.username,
+    player2Username: player2.username,
   });
   console.log(`Game started in room ${randRoomId}`);
 }
@@ -53,9 +53,8 @@ function cancelPlayerSearch(socket) {
 
 io.on("connection", async (socket) => {
   console.log("A user connected");
-  socket.on("login", (username, gameMode) => {
+  socket.on("login", (username) => {
     socket.username = username;
-    socket.gameMode = gameMode;
     userJoinRoom(io, socket);
   });
 
