@@ -12,31 +12,25 @@ let playerRooms = {};
 let usernames = new Set();
 let ips = new Set();
 
-let waitingPlayersByGamemode = new Map();
-
 function userJoinRoom(io, socket) {
-  let waitingPlayers = waitingPlayersByGamemode.get(socket.gamemode);
-  if (!waitingPlayers) {
-    waitingPlayers = [];
-    waitingPlayersByGamemode.set(socket.gamemode, waitingPlayers);
+  if (usernames.has(socket.username) || ips.has(socket.handshake.address)) {
+    socket.emit("error", "Benutzername oder IP-Adresse bereits in Verwendung");
+    //return;
   }
 
-  const player1 = waitingPlayers.find((player) => player !== socket);
-  if (!player1) {
-    waitingPlayers.push(socket);
-    return;
-  }
+  usernames.add(socket.username);
+  ips.add(socket.handshake.address);
 
-  waitingPlayers = waitingPlayers.filter((player) => player !== player1 && player !== socket);
-  waitingPlayersByGamemode.set(socket.gamemode, waitingPlayers);
-
-  const player2 = socket;
-  const randRoomId = uuidv4();
-  playerRooms[player1.id] = randRoomId;
-  playerRooms[player2.id] = randRoomId;
+  waitingPlayers.push(socket);
+  if (waitingPlayers.length < 2) return;
+  const player1 = waitingPlayers.shift();
+  const player2 = waitingPlayers.shift();
+  const randRoomId = Math.ceil(Math.random() * 10000);
   player1.join(randRoomId);
   player2.join(randRoomId);
-  io.to(randRoomId).emit("gameStart", {
+  playerRooms[player1.id] = randRoomId;
+  playerRooms[player2.id] = randRoomId;
+  io.to(randRoomId).emit("startGame", {
     room: randRoomId,
     player1: player1.id,
     player2: player2.id,
@@ -47,11 +41,7 @@ function userJoinRoom(io, socket) {
 }
 
 function cancelPlayerSearch(socket) {
-  let waitingPlayers = waitingPlayersByGamemode.get(socket.gamemode);
-  if (waitingPlayers) {
-    waitingPlayers = waitingPlayers.filter((player) => player !== socket);
-    waitingPlayersByGamemode.set(socket.gamemode, waitingPlayers);
-  }
+  waitingPlayers = waitingPlayers.filter((player) => player !== socket);
 }
 
 io.on("connection", async (socket) => {
