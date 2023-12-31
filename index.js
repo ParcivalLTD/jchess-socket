@@ -6,7 +6,7 @@ const io = socketIO(server, { cors: { origin: "*" } });
 
 const PORT = process.env.PORT || 3000;
 
-let waitingPlayers = [];
+let waitingPlayers = {}; // Use an object to store waiting players based on gamemode
 let playerRooms = {};
 
 let usernames = new Set();
@@ -21,7 +21,13 @@ function userJoinRoom(io, socket) {
   usernames.add(socket.username);
   ips.add(socket.handshake.address);
 
-  const playersWithSameGamemode = waitingPlayers.filter((player) => player.gamemode === socket.gamemode);
+  const gamemode = socket.gamemode;
+
+  if (!waitingPlayers[gamemode]) {
+    waitingPlayers[gamemode] = [];
+  }
+
+  const playersWithSameGamemode = waitingPlayers[gamemode].filter((player) => player.gamemode === gamemode);
 
   if (playersWithSameGamemode.length >= 1) {
     const opponent = playersWithSameGamemode.shift();
@@ -39,12 +45,16 @@ function userJoinRoom(io, socket) {
     });
     console.log(`Game started in room ${randRoomId}`);
   } else {
-    waitingPlayers.push(socket);
+    waitingPlayers[gamemode].push(socket);
   }
 }
 
 function cancelPlayerSearch(socket) {
-  waitingPlayers = waitingPlayers.filter((player) => player !== socket);
+  const gamemode = socket.gamemode;
+
+  if (waitingPlayers[gamemode]) {
+    waitingPlayers[gamemode] = waitingPlayers[gamemode].filter((player) => player !== socket);
+  }
 }
 
 io.on("connection", async (socket) => {
@@ -76,7 +86,7 @@ io.on("connection", async (socket) => {
       socket.to(room).emit("opponentDisconnected", "Your opponent has disconnected. You win!");
     }
     delete playerRooms[socket.id];
-    waitingPlayers = waitingPlayers.filter((player) => player !== socket);
+    cancelPlayerSearch(socket);
   });
 });
 
