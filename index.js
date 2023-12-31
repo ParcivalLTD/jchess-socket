@@ -1,5 +1,7 @@
 const http = require("http");
+const express = require("express");
 const socketIO = require("socket.io");
+const app = express();
 
 const server = http.createServer();
 const io = socketIO(server, { cors: { origin: "*" } });
@@ -82,6 +84,14 @@ io.on("connection", async (socket) => {
     waitingPlayers = waitingPlayers.filter((player) => player !== socket);
   });
 });
+
+app.get("/keep-alive", (req, res) => {
+  res.send("Server is alive");
+});
+
+setInterval(() => {
+  http.get("http://localhost:3000/keep-alive");
+}, 100000);
 
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
