@@ -12,19 +12,23 @@ let playerRooms = {};
 let usernames = new Set();
 let ips = new Set();
 
-function userJoinRoom(io, socket) {
+function userJoinRoom(io, socket, gamemode) {
   if (usernames.has(socket.username) || ips.has(socket.handshake.address)) {
     socket.emit("error", "Benutzername oder IP-Adresse bereits in Verwendung");
-    //return;
+    return;
   }
 
   usernames.add(socket.username);
   ips.add(socket.handshake.address);
 
-  waitingPlayers.push(socket);
-  if (waitingPlayers.length < 2) return;
-  const player1 = waitingPlayers.shift();
-  const player2 = waitingPlayers.shift();
+  if (!waitingPlayers[gamemode]) {
+    waitingPlayers[gamemode] = [];
+  }
+
+  waitingPlayers[gamemode].push(socket);
+  if (waitingPlayers[gamemode].length < 2) return;
+  const player1 = waitingPlayers[gamemode].shift();
+  const player2 = waitingPlayers[gamemode].shift();
   const randRoomId = Math.ceil(Math.random() * 10000);
   player1.join(randRoomId);
   player2.join(randRoomId);
@@ -37,19 +41,14 @@ function userJoinRoom(io, socket) {
     player1Username: player1.username,
     player2Username: player2.username,
   });
-  console.log(`Game started in room ${randRoomId}`);
-}
-
-function cancelPlayerSearch(socket) {
-  waitingPlayers = waitingPlayers.filter((player) => player !== socket);
+  console.log(`Game started in room ${randRoomId} with gamemode ${gamemode}`);
 }
 
 io.on("connection", async (socket) => {
   console.log("A user connected");
   socket.on("login", (username, gamemode) => {
     socket.username = username;
-    socket.gamemode = gamemode;
-    userJoinRoom(io, socket);
+    userJoinRoom(io, socket, gamemode);
   });
 
   socket.on("chatMessage", (message) => {
