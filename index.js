@@ -12,7 +12,7 @@ let playerRooms = {};
 let usernames = new Set();
 let ips = new Set();
 
-function userJoinRoom(io, socket, gamemode) {
+function userJoinRoom(io, socket) {
   if (usernames.has(socket.username) || ips.has(socket.handshake.address)) {
     socket.emit("error", "Benutzername oder IP-Adresse bereits in Verwendung");
     return;
@@ -21,34 +21,39 @@ function userJoinRoom(io, socket, gamemode) {
   usernames.add(socket.username);
   ips.add(socket.handshake.address);
 
-  if (!waitingPlayers[gamemode]) {
-    waitingPlayers[gamemode] = [];
-  }
+  const playersWithSameGamemode = waitingPlayers.filter((player) => player.gamemode === socket.gamemode);
 
-  waitingPlayers[gamemode].push(socket);
-  if (waitingPlayers[gamemode].length < 2) return;
-  const player1 = waitingPlayers[gamemode].shift();
-  const player2 = waitingPlayers[gamemode].shift();
-  const randRoomId = Math.ceil(Math.random() * 10000);
-  player1.join(randRoomId);
-  player2.join(randRoomId);
-  playerRooms[player1.id] = randRoomId;
-  playerRooms[player2.id] = randRoomId;
-  io.to(randRoomId).emit("startGame", {
-    room: randRoomId,
-    player1: player1.id,
-    player2: player2.id,
-    player1Username: player1.username,
-    player2Username: player2.username,
-  });
-  console.log(`Game started in room ${randRoomId} with gamemode ${gamemode}`);
+  if (playersWithSameGamemode.length >= 1) {
+    const opponent = playersWithSameGamemode.shift();
+    const randRoomId = Math.ceil(Math.random() * 10000);
+    opponent.join(randRoomId);
+    socket.join(randRoomId);
+    playerRooms[opponent.id] = randRoomId;
+    playerRooms[socket.id] = randRoomId;
+    io.to(randRoomId).emit("startGame", {
+      room: randRoomId,
+      player1: opponent.id,
+      player2: socket.id,
+      player1Username: opponent.username,
+      player2Username: socket.username,
+    });
+    console.log(`Game started in room ${randRoomId}`);
+  } else {
+    waitingPlayers.push(socket);
+  }
+}
+
+function cancelPlayerSearch(socket) {
+  waitingPlayers = waitingPlayers.filter((player) => player !== socket);
 }
 
 io.on("connection", async (socket) => {
   console.log("A user connected");
+
   socket.on("login", (username, gamemode) => {
     socket.username = username;
-    userJoinRoom(io, socket, gamemode);
+    socket.gamemode = gamemode;
+    userJoinRoom(io, socket);
   });
 
   socket.on("chatMessage", (message) => {
