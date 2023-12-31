@@ -48,14 +48,17 @@ function userJoinRoom(io, socket) {
 }
 
 function cancelPlayerSearch(socket) {
-  waitingPlayers = waitingPlayers.filter((player) => player !== socket);
+  let gameMode = socket.gameMode;
+  if (waitingPlayers[gameMode]) {
+    waitingPlayers[gameMode] = waitingPlayers[gameMode].filter((player) => player !== socket);
+  }
 }
 
 io.on("connection", async (socket) => {
   console.log("A user connected");
-  socket.on("login", (username, gameMode) => {
+  socket.on("login", (username, gamemode) => {
     socket.username = username;
-    socket.gameMode = gameMode;
+    socket.gameMode = gamemode;
     userJoinRoom(io, socket);
   });
 
@@ -82,10 +85,6 @@ io.on("connection", async (socket) => {
     waitingPlayers = waitingPlayers.filter((player) => player !== socket);
   });
 });
-
-setInterval(() => {
-  http.get(`http://localhost:${PORT}/`);
-}, 100000);
 
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
