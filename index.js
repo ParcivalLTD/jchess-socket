@@ -90,7 +90,7 @@ app.get("/keep-alive", (req, res) => {
 });
 
 setInterval(() => {
-  http.get("http://localhost:3000/keep-alive");
+  http.get(`http://localhost:${PORT}/keep-alive`);
 }, 100000);
 
 server.listen(PORT, () => {
