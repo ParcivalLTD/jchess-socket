@@ -6,7 +6,7 @@ const io = socketIO(server, { cors: { origin: "*" } });
 
 const PORT = process.env.PORT || 3000;
 
-let waitingPlayers = {};
+let waitingPlayers = [];
 let playerRooms = {};
 
 let usernames = new Set();
@@ -15,7 +15,7 @@ let ips = new Set();
 function userJoinRoom(io, socket) {
   if (usernames.has(socket.username) || ips.has(socket.handshake.address)) {
     socket.emit("error", "Benutzername oder IP-Adresse bereits in Verwendung");
-    return;
+    //return;
   }
 
   usernames.add(socket.username);
@@ -24,7 +24,6 @@ function userJoinRoom(io, socket) {
   if (!waitingPlayers[socket.gamemode]) {
     waitingPlayers[socket.gamemode] = [];
   }
-
   waitingPlayers[socket.gamemode].push(socket);
   if (waitingPlayers[socket.gamemode].length < 2) return;
   const player1 = waitingPlayers[socket.gamemode].shift();
@@ -45,7 +44,9 @@ function userJoinRoom(io, socket) {
 }
 
 function cancelPlayerSearch(socket) {
-  waitingPlayers = waitingPlayers.filter((player) => player !== socket);
+  if (waitingPlayers[socket.gamemode]) {
+    waitingPlayers[socket.gamemode] = waitingPlayers[socket.gamemode].filter((player) => player !== socket);
+  }
 }
 
 io.on("connection", async (socket) => {
