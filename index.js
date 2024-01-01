@@ -6,14 +6,21 @@ const io = socketIO(server, { cors: { origin: "*" } });
 
 const PORT = process.env.PORT || 3000;
 
+let waitingPlayers = [];
 let playerRooms = {};
 
 let usernames = new Set();
 let ips = new Set();
 
-let waitingPlayers = {};
-
 function userJoinRoom(io, socket) {
+  if (usernames.has(socket.username) || ips.has(socket.handshake.address)) {
+    socket.emit("error", "Benutzername oder IP-Adresse bereits in Verwendung");
+    return;
+  }
+
+  usernames.add(socket.username);
+  ips.add(socket.handshake.address);
+
   if (!waitingPlayers[socket.gamemode]) {
     waitingPlayers[socket.gamemode] = [];
   }
