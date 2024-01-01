@@ -6,7 +6,7 @@ const io = socketIO(server, { cors: { origin: "*" } });
 
 const PORT = process.env.PORT || 3000;
 
-let waitingPlayers = [];
+let waitingPlayers = {};
 let playerRooms = {};
 
 let usernames = new Set();
@@ -45,9 +45,7 @@ function userJoinRoom(io, socket) {
 }
 
 function cancelPlayerSearch(socket) {
-  if (waitingPlayers[socket.gamemode]) {
-    waitingPlayers[socket.gamemode] = waitingPlayers[socket.gamemode].filter((player) => player !== socket);
-  }
+  waitingPlayers = waitingPlayers.filter((player) => player !== socket);
 }
 
 io.on("connection", async (socket) => {
