@@ -46,8 +46,10 @@ function cancelPlayerSearch(socket) {
 
 io.on("connection", async (socket) => {
   console.log("A user connected");
-  socket.on("login", (username) => {
+  socket.on("login", (username, gamemode) => {
     socket.username = username;
+    socket.gamemode = gamemode;
+    console.log(`User ${username} (${gamemode}) logged in`);
     userJoinRoom(io, socket);
   });
 
@@ -74,6 +76,12 @@ io.on("connection", async (socket) => {
     waitingPlayers = waitingPlayers.filter((player) => player !== socket);
   });
 });
+
+function inactivityDings() {
+  console.log("Ding!");
+}
+
+setInterval(inactivityDings, 1000 * 60);
 
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
