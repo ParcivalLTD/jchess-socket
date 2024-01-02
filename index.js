@@ -94,13 +94,11 @@ io.on("connection", async (socket) => {
     delete playerRooms[socket.id];
     waitingPlayers = waitingPlayers.filter((player) => player !== socket);
   });
+
+  socket.on("ding", () => {
+    socket.emit("ding");
+  });
 });
-
-function inactivityDings() {
-  console.log("Ding!");
-}
-
-setInterval(inactivityDings, 1000 * 60);
 
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
