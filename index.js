@@ -61,10 +61,10 @@ io.on("connection", async (socket) => {
       socket.token = token;
       if (tokenGameModes[token]) {
         socket.gamemode = tokenGameModes[token];
+        socket.emit("gamemode", socket.gamemode);
       } else {
         tokenGameModes[token] = gamemode;
       }
-      socket.emit("gamemode", socket.gamemode);
     }
 
     userJoinRoom(io, socket);
