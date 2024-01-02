@@ -14,10 +14,15 @@ let ips = new Set();
 
 let tokenGameModes = {};
 
+let tokenRooms = {};
+
 function userJoinRoom(io, socket) {
-  if (socket.token && socket.token !== "") {
-    joinRoom(io, socket);
+  if (socket.token && tokenRooms[socket.token]) {
+    // Wenn es bereits einen Raum für dieses Token gibt, lassen Sie den Benutzer diesem Raum beitreten
+    socket.join(tokenRooms[socket.token]);
+    console.log(socket.username + " joined room " + tokenRooms[socket.token]);
   } else {
+    // Wenn es keinen Raum für dieses Token gibt, erstellen Sie einen neuen Raum und lassen Sie den Benutzer diesem Raum beitreten
     if (!waitingPlayers[socket.gamemode]) {
       waitingPlayers[socket.gamemode] = [];
     }
@@ -36,6 +41,13 @@ function joinRoom(io, socket) {
     player2.join(randRoomId);
     playerRooms[player1.id] = randRoomId;
     playerRooms[player2.id] = randRoomId;
+    // Speichern Sie die Zuordnung von Token zu Raum
+    if (player1.token) {
+      tokenRooms[player1.token] = randRoomId;
+    }
+    if (player2.token) {
+      tokenRooms[player2.token] = randRoomId;
+    }
     io.to(randRoomId).emit("startGame", {
       room: randRoomId,
       player1: player1.id,
