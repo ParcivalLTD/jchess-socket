@@ -67,7 +67,9 @@ io.on("connection", async (socket) => {
       }
     }
 
-    userJoinRoom(io, socket);
+    if (!token || (token && tokenGameModes[token] === gamemode)) {
+      userJoinRoom(io, socket);
+    }
   });
 
   socket.on("chatMessage", (message) => {
