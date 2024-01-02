@@ -15,19 +15,19 @@ let ips = new Set();
 let tokenGameModes = {};
 
 function userJoinRoom(io, socket) {
-  if (usernames.has(socket.username) || ips.has(socket.handshake.address)) {
-    socket.emit("error", "Benutzername oder IP-Adresse bereits in Verwendung");
-    //return;
+  if (socket.token && socket.token !== "") {
+    joinRoom(io, socket);
+  } else {
+    if (!waitingPlayers[socket.gamemode]) {
+      waitingPlayers[socket.gamemode] = [];
+    }
+    waitingPlayers[socket.gamemode].push(socket);
+    if (waitingPlayers[socket.gamemode].length < 2) return;
+    joinRoom(io, socket);
   }
+}
 
-  usernames.add(socket.username);
-  ips.add(socket.handshake.address);
-
-  if (!waitingPlayers[socket.gamemode]) {
-    waitingPlayers[socket.gamemode] = [];
-  }
-  waitingPlayers[socket.gamemode].push(socket);
-  if (waitingPlayers[socket.gamemode].length < 2) return;
+function joinRoom(io, socket) {
   const player1 = waitingPlayers[socket.gamemode].shift();
   const player2 = waitingPlayers[socket.gamemode].shift();
   const randRoomId = Math.ceil(Math.random() * 10000);
