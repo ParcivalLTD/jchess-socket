@@ -69,6 +69,7 @@ io.on("connection", async (socket) => {
 
     if (!token || (token && tokenGameModes[token] === gamemode)) {
       userJoinRoom(io, socket);
+      console.log("User joined room");
     }
   });
 
