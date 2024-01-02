@@ -87,9 +87,13 @@ io.on("connection", async (socket) => {
   });
 
   socket.on("disconnect", () => {
-    usernames.delete(socket.username);
+    if (socket.username) {
+      usernames.delete(socket.username);
+      console.log(socket.username + " disconnected");
+    } else {
+      console.log("A user disconnected without a username");
+    }
     ips.delete(socket.handshake.address);
-    console.log(socket.username + " disconnected");
     const room = playerRooms[socket.id];
     if (room) {
       socket.to(room).emit("opponentDisconnected", "Your opponent has disconnected. You win!");
