@@ -52,20 +52,20 @@ function cancelPlayerSearch(socket) {
 }
 
 io.on("connection", async (socket) => {
-  console.log("A user connected");
   socket.on("login", (username, gamemode, token) => {
     socket.username = username;
     socket.gamemode = gamemode;
-    socket.token = token;
     console.log(`User ${username} (${gamemode}) logged in`);
 
-    if (tokenGameModes[token]) {
-      socket.gamemode = tokenGameModes[token];
-    } else {
-      tokenGameModes[token] = gamemode;
+    if (token) {
+      socket.token = token;
+      if (tokenGameModes[token]) {
+        socket.gamemode = tokenGameModes[token];
+      } else {
+        tokenGameModes[token] = gamemode;
+      }
+      socket.emit("gamemode", socket.gamemode);
     }
-
-    socket.emit("gamemode", socket.gamemode);
 
     userJoinRoom(io, socket);
   });
