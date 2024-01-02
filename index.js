@@ -59,7 +59,7 @@ io.on("connection", async (socket) => {
 
     if (token) {
       socket.token = token;
-      if (tokenGameModes[token]) {
+      if (tokenGameModes[token] && tokenGameModes[token] !== gamemode) {
         socket.gamemode = tokenGameModes[token];
         socket.emit("gamemode", socket.gamemode);
       } else {
