@@ -28,21 +28,23 @@ function userJoinRoom(io, socket) {
 }
 
 function joinRoom(io, socket) {
-  const player1 = waitingPlayers[socket.gamemode].shift();
-  const player2 = waitingPlayers[socket.gamemode].shift();
-  const randRoomId = Math.ceil(Math.random() * 10000);
-  player1.join(randRoomId);
-  player2.join(randRoomId);
-  playerRooms[player1.id] = randRoomId;
-  playerRooms[player2.id] = randRoomId;
-  io.to(randRoomId).emit("startGame", {
-    room: randRoomId,
-    player1: player1.id,
-    player2: player2.id,
-    player1Username: player1.username,
-    player2Username: player2.username,
-  });
-  console.log(`Game started in room ${randRoomId}`);
+  if (waitingPlayers[socket.gamemode] && waitingPlayers[socket.gamemode].length >= 2) {
+    const player1 = waitingPlayers[socket.gamemode].shift();
+    const player2 = waitingPlayers[socket.gamemode].shift();
+    const randRoomId = Math.ceil(Math.random() * 10000);
+    player1.join(randRoomId);
+    player2.join(randRoomId);
+    playerRooms[player1.id] = randRoomId;
+    playerRooms[player2.id] = randRoomId;
+    io.to(randRoomId).emit("startGame", {
+      room: randRoomId,
+      player1: player1.id,
+      player2: player2.id,
+      player1Username: player1.username,
+      player2Username: player2.username,
+    });
+    console.log(`Game started in room ${randRoomId}`);
+  }
 }
 
 function cancelPlayerSearch(socket) {
