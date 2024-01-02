@@ -12,6 +12,8 @@ let playerRooms = {};
 let usernames = new Set();
 let ips = new Set();
 
+let tokenGameModes = {};
+
 function userJoinRoom(io, socket) {
   if (usernames.has(socket.username) || ips.has(socket.handshake.address)) {
     socket.emit("error", "Benutzername oder IP-Adresse bereits in Verwendung");
@@ -51,10 +53,20 @@ function cancelPlayerSearch(socket) {
 
 io.on("connection", async (socket) => {
   console.log("A user connected");
-  socket.on("login", (username, gamemode) => {
+  socket.on("login", (username, gamemode, token) => {
     socket.username = username;
     socket.gamemode = gamemode;
+    socket.token = token;
     console.log(`User ${username} (${gamemode}) logged in`);
+
+    if (tokenGameModes[token]) {
+      socket.gamemode = tokenGameModes[token];
+    } else {
+      tokenGameModes[token] = gamemode;
+    }
+
+    socket.emit("gamemode", socket.gamemode);
+
     userJoinRoom(io, socket);
   });
 
