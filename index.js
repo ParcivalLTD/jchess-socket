@@ -71,7 +71,7 @@ io.on("connection", async (socket) => {
 
     if (!token || (token && tokenGameModes[token] === gamemode)) {
       userJoinRoom(io, socket);
-      console.log("User joined room");
+      console.log(username + " joined room");
     }
   });
 
@@ -89,7 +89,7 @@ io.on("connection", async (socket) => {
   socket.on("disconnect", () => {
     usernames.delete(socket.username);
     ips.delete(socket.handshake.address);
-    console.log("A user disconnected");
+    console.log(socket.username + " disconnected");
     const room = playerRooms[socket.id];
     if (room) {
       socket.to(room).emit("opponentDisconnected", "Your opponent has disconnected. You win!");
